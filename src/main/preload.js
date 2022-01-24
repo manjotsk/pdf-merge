@@ -20,4 +20,13 @@ contextBridge.exposeInMainWorld('electron', {
       }
     },
   },
+  doAction: async (arg) => {
+    return ipcRenderer.invoke('an-action', arg);
+  },
+  saveFile: async (arg) => {
+    return ipcRenderer.invoke('save-file', arg);
+  },
+  mergeFiles: async (arg) => {
+    return ipcRenderer.invoke('merge-file', arg);
+  },
 });

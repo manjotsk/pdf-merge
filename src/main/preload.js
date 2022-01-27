@@ -26,7 +26,13 @@ contextBridge.exposeInMainWorld('electron', {
   saveFile: async (arg) => {
     return ipcRenderer.invoke('save-file', arg);
   },
+  getDirectoryStructure: async (arg) => {
+    return ipcRenderer.invoke('get-directory-structure', arg);
+  },
   mergeFiles: async (arg) => {
     return ipcRenderer.invoke('merge-file', arg);
+  },
+  selectDirectory: async (arg) => {
+    return ipcRenderer.invoke('select-directory', arg);
   },
 });

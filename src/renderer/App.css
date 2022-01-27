@@ -60,3 +60,11 @@ a:hover {
   align-items: center;
   margin: 20px 0;
 }
+
+.table-hidescroll {
+  overflow-y: scroll;
+}
+
+.table-hidescroll::-webkit-scrollbar {
+  display: none;
+}

@@ -11,15 +11,25 @@
 import 'core-js/stable';
 import 'regenerator-runtime/runtime';
 import path from 'path';
-import { app, BrowserWindow, shell, ipcMain, dialog } from 'electron';
+import {
+  app,
+  BrowserWindow,
+  shell,
+  ipcMain,
+  dialog,
+  globalShortcut,
+} from 'electron';
 import { autoUpdater } from 'electron-updater';
 import log from 'electron-log';
 import fs from 'fs';
 import PDFMerger from 'pdf-merger-js';
 import MenuBuilder from './menu';
 import { resolveHtmlPath } from './util';
-const dirTree = require('directory-tree');
 
+const dirTree = require('directory-tree');
+const Store = require('electron-store');
+
+const store = new Store();
 export default class AppUpdater {
   constructor() {
     log.transports.file.level = 'info';
@@ -70,7 +80,11 @@ const getAllFilesAndFoldersRecursively = () => {
 };
 
 ipcMain.handle('get-directory-structure', async (event, arg) => {
-  const appPath = path.join('/Users/manjotsingh/HR');
+  const rootpath = store.get('root-path');
+  if (!rootpath) {
+    return null;
+  }
+  const appPath = path.join(rootpath);
   const a = dirTree(appPath, {
     extensions: /\.pdf$/,
   });
@@ -78,6 +92,7 @@ ipcMain.handle('get-directory-structure', async (event, arg) => {
 
   return a;
 });
+
 ipcMain.handle('save-file', async (event, arg) => {
   // do stuff
   //  awaitableProcess
@@ -116,6 +131,21 @@ ipcMain.handle('select-directory', async (event, arg) => {
   if (result) {
     return result;
   }
+});
+
+ipcMain.handle('setup-root-path', async (event, arg) => {
+  const options = {
+    properties: ['openDirectory'],
+  };
+  const result = dialog.showOpenDialogSync(mainWindow, options);
+  if (result) {
+    store.set('root-path', result[0]);
+    return result[0];
+  }
+});
+
+ipcMain.handle('get-root-path', async (event) => {
+  return store.get('root-path');
 });
 
 ipcMain.handle('merge-file', async (event, arg) => {
@@ -222,6 +252,11 @@ const createWindow = async () => {
   // Remove this if your app does not use auto updates
   // eslint-disable-next-line
   new AppUpdater();
+
+  globalShortcut.register('CommandOrControl+R', function () {
+    console.log('CommandOrControl+R is pressed');
+    mainWindow.reload();
+  });
 };
 
 /**

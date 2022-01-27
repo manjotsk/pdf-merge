@@ -35,4 +35,10 @@ contextBridge.exposeInMainWorld('electron', {
   selectDirectory: async (arg) => {
     return ipcRenderer.invoke('select-directory', arg);
   },
+  setupRootPath: async (arg) => {
+    return ipcRenderer.invoke('setup-root-path', arg);
+  },
+  getRootPath: async () => {
+    return ipcRenderer.invoke('get-root-path');
+  },
 });

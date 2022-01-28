@@ -24,13 +24,16 @@ function TreeData() {
   };
   const onMerge = () => {
     window.electron.selectDirectory().then((path) => {
+      const payload = {
+        saveAt: path,
+        files: selectedRows
+          .filter((item) => !item.children)
+          .map((item) => item.path),
+      };
+      console.log(payload);
+
       window.electron
-        .mergeFiles({
-          saveAt: path,
-          files: selectedRows
-            .filter((item) => !item.children)
-            .map((item) => item.path),
-        })
+        .mergeFiles(payload)
         .then((res) => {
           console.log(res);
         })

@@ -122,7 +122,7 @@ ipcMain.handle('select-directory', async (event, arg) => {
     properties: ['openDirectory'],
     filters: [
       {
-        name: 'Final',
+        name: 'electron pdf',
         extensions: ['pdf'],
       },
     ],
@@ -157,13 +157,8 @@ ipcMain.handle('merge-file', async (event, arg) => {
     arg.files.forEach((file) => {
       merger.add(file);
     });
-    const appData = app.getPath('appData');
-    const appPath = path.join(appData, 'g6-pdf-merge', `result`);
-    // check if directory exists
-    if (!fs.existsSync(appPath)) {
-      fs.mkdirSync(appPath);
-    }
-    const name = arg.saveAt || path.join(appPath, 'random.pdf');
+
+    const name = arg.saveAt;
     console.log({ name });
 
     merger.save(name).then(() => {

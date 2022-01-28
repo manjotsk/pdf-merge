@@ -136,13 +136,15 @@ function TreeData() {
           })}
         />
       )}
-      <Button
-        type="primary"
-        onClick={onMerge}
-        disabled={selectedRows.length === 0}
-      >
-        Merge
-      </Button>
+      {!!treeData?.length && (
+        <Button
+          type="primary"
+          onClick={onMerge}
+          disabled={selectedRows.length === 0}
+        >
+          Merge
+        </Button>
+      )}
       {/* fixed footer */}
       <div
         style={{

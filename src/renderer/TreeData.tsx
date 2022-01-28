@@ -1,13 +1,9 @@
 import React, { useEffect, useState } from 'react';
-import { Table, Switch, Space, Button, Upload } from 'antd';
-import { DeleteOutlined, UploadOutlined } from '@ant-design/icons';
-import cloneDeep from 'lodash/cloneDeep';
+import { Table, Button } from 'antd';
 // handleSave promise
 
 const getDirectoryStructure = () => {
   return window.electron.getDirectoryStructure().then((res) => {
-    console.log(res);
-
     return res;
   });
 };
@@ -43,16 +39,22 @@ function TreeData() {
         });
     });
   };
+  const getRootPath = () => {
+    return window.electron.getRootPath();
+  };
   useEffect(() => {
-    getDirectoryStructure().then((res) => {
-      // filret by name starting with .
-      setRoot(res);
-      if (res) {
-        setTreeData(
-          res?.children?.filter((item) => !item.name.startsWith('.')) || []
-        );
-      }
+    getRootPath().then((path) => {
+      setRoot(path);
+      getDirectoryStructure().then((res) => {
+        // filret by name starting with .
+        if (res) {
+          setTreeData(
+            res?.children?.filter((item) => !item.name.startsWith('.')) || []
+          );
+        }
+      });
     });
+
     return () => {};
   }, []);
 
@@ -66,7 +68,18 @@ function TreeData() {
 
   const setupRootPath = () => {
     window.electron.setupRootPath().then((path) => {
+      if (!path) return;
+      console.log({ path });
+
       setRoot(path);
+      getDirectoryStructure().then((res) => {
+        // filret by name starting with .
+        if (res) {
+          setTreeData(
+            res?.children?.filter((item) => !item.name.startsWith('.')) || []
+          );
+        }
+      });
     });
   };
 
@@ -81,11 +94,33 @@ function TreeData() {
         padding: '50px',
       }}
     >
-      {/* <Space align="center" style={{ marginBottom: 16 }}>
-        CheckStrictly:{' '}
-        <Switch checked={checkStrictly} onChange={setCheckStrictly} />
-      </Space> */}
-      {root ? (
+      {/* fixed header */}
+      <div
+        style={{
+          display: 'flex',
+          flexDirection: 'column',
+          justifyContent: 'space-between',
+          // alignItems: 'center',
+        }}
+      >
+        <div style={{ display: 'flex', flex: 1, flexDirection: 'row' }}>
+          <img
+            src={require('../../assets/elr_logo.png')}
+            alt="logo"
+            style={{
+              height: '100px',
+              marginRight: '20px',
+            }}
+          />
+        </div>
+        <div style={{ display: 'flex', flex: 1, flexDirection: 'row' }}>
+          <h1 style={{ marginLeft: '20px', color: 'blue' }}>
+            E.L. Robinson Engineering - New Hire Orientation Documentation
+          </h1>
+        </div>
+      </div>
+
+      {!!root && (
         <Table
           sticky
           className="table-hidescroll"
@@ -94,9 +129,12 @@ function TreeData() {
           dataSource={treeData}
           pagination={false}
           rowKey={(record) => record.name}
+          onRow={(record) => ({
+            style: {
+              backgroundColor: record.children ? '#fafafa' : '#fff',
+            },
+          })}
         />
-      ) : (
-        <Button onClick={setupRootPath}>Setup File Root Folder</Button>
       )}
       <Button
         type="primary"
@@ -105,6 +143,32 @@ function TreeData() {
       >
         Merge
       </Button>
+      {/* fixed footer */}
+      <div
+        style={{
+          position: 'absolute',
+          bottom: 0,
+          width: '100%',
+          display: 'flex',
+          justifyContent: 'center',
+          alignItems: 'center',
+          backgroundColor: '#fafafa',
+          padding: '10px',
+        }}
+      >
+        {!root && (
+          <Button type="primary" onClick={setupRootPath}>
+            Setup File Root Folder
+          </Button>
+        )}
+        {!!root && (
+          <span>
+            Your root directory is set to <strong>{root}</strong>. Click
+            <a onClick={setupRootPath}>here</a>
+            to change directory.
+          </span>
+        )}
+      </div>
     </div>
   );
 }

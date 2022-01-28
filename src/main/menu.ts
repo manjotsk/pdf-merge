@@ -31,7 +31,21 @@ export default class MenuBuilder {
         ? this.buildDarwinTemplate()
         : this.buildDefaultTemplate();
 
-    const menu = Menu.buildFromTemplate(template);
+    const menu = Menu.buildFromTemplate([
+      ...template,
+      {
+        role: 'fileMenu',
+        submenu: [
+          {
+            label: 'Learn More',
+            click: async () => {
+              const { shell } = require('electron');
+              await shell.openExternal('https://electronjs.org');
+            },
+          },
+        ],
+      },
+    ]);
     Menu.setApplicationMenu(menu);
 
     return menu;

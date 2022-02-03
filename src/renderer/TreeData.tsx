@@ -94,7 +94,7 @@ function TreeData() {
         flexDirection: 'column',
         width: '100vw',
         height: '100vh',
-        padding: '50px',
+        paddingTop: '50px',
       }}
     >
       {/* fixed header */}
@@ -116,10 +116,27 @@ function TreeData() {
             }}
           />
         </div>
-        <div style={{ display: 'flex', flex: 1, flexDirection: 'row' }}>
+        <div
+          style={{
+            display: 'flex',
+            flex: 1,
+            flexDirection: 'row',
+            justifyContent: 'space-between',
+            paddingRight: '50px',
+          }}
+        >
           <h1 style={{ marginLeft: '20px', color: 'blue' }}>
             E.L. Robinson Engineering - New Hire Orientation Documentation
           </h1>
+          {!!treeData?.length && (
+            <Button
+              type="primary"
+              onClick={onMerge}
+              disabled={selectedRows.length === 0}
+            >
+              Merge
+            </Button>
+          )}
         </div>
       </div>
 
@@ -131,6 +148,10 @@ function TreeData() {
           rowSelection={{ ...rowSelection, checkStrictly }}
           dataSource={treeData}
           pagination={false}
+          style={{
+            width: '95vw',
+            alignSelf: 'center',
+          }}
           rowKey={(record) => record.name}
           onRow={(record) => ({
             style: {
@@ -139,40 +160,39 @@ function TreeData() {
           })}
         />
       )}
-      {!!treeData?.length && (
-        <Button
-          type="primary"
-          onClick={onMerge}
-          disabled={selectedRows.length === 0}
-        >
-          Merge
-        </Button>
-      )}
+
       {/* fixed footer */}
       <div
         style={{
           position: 'absolute',
           bottom: 0,
+          alignSelf: 'center',
           width: '100%',
           display: 'flex',
+          flexDirection: 'column',
           justifyContent: 'center',
           alignItems: 'center',
           backgroundColor: '#fafafa',
           padding: '10px',
         }}
       >
-        {!root && (
-          <Button type="primary" onClick={setupRootPath}>
-            Setup File Root Folder
-          </Button>
-        )}
-        {!!root && (
-          <span>
-            Your root directory is set to <strong>{root}</strong>. Click
-            <a onClick={setupRootPath}>here</a>
-            to change directory.
-          </span>
-        )}
+        <div>
+          {!root && (
+            <Button type="primary" onClick={setupRootPath}>
+              Setup File Root Folder
+            </Button>
+          )}
+          {!!root && (
+            <span>
+              Your root directory is set to <strong>{root}</strong>. Click
+              <a onClick={setupRootPath}>here</a>
+              to change directory.
+            </span>
+          )}
+        </div>
+        <div>
+          <strong>Powered by G6 Technologies</strong>
+        </div>
       </div>
     </div>
   );

@@ -158,15 +158,17 @@ ipcMain.handle('merge-file', async (event, arg) => {
       merger.add(file);
     });
 
-    const name = arg.saveAt;
+    const name = path.resolve(arg.saveAt);
     console.log({ name });
 
     merger.save(name).then(() => {
       shell.showItemInFolder(name);
       // shell.openExternal(`file://${name}`);
     });
+    return { name };
   } catch (error) {
     console.log(error);
+    return error;
   }
 });
 

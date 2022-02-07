@@ -162,7 +162,7 @@ ipcMain.handle('merge-file', async (event, arg) => {
     console.log({ name });
 
     merger.save(name).then(() => {
-      shell.showItemInFolder(name);
+      shell.showItemInFolder(fs.readFileSync(name));
       // shell.openExternal(`file://${name}`);
     });
     return { name };

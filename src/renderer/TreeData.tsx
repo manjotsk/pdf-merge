@@ -22,8 +22,12 @@ function TreeData() {
       setSelectedRows(selectedRows);
     },
   };
+  const [merging, setMerging] = useState(false)
   const onMerge = () => {
+
+    setMerging(true)
     window.electron.selectDirectory().then((path) => {
+      setMerging(false)
       const payload = {
         saveAt: path,
         files: selectedRows
@@ -40,7 +44,10 @@ function TreeData() {
         .catch((err) => {
           console.log(err);
         });
-    });
+    }).catch(()=>{
+      setMerging(false)
+
+    })
   };
   const getRootPath = () => {
     return window.electron.getRootPath();
@@ -142,6 +149,7 @@ function TreeData() {
 
       {!!root && (
         <Table
+        loading={merging}
           sticky
           className="table-hidescroll"
           columns={columns}

@@ -22,9 +22,28 @@ import {
 import { autoUpdater } from 'electron-updater';
 import log from 'electron-log';
 import fs from 'fs';
-import PDFMerger from 'pdf-merger-js';
+
 import MenuBuilder from './menu';
 import { resolveHtmlPath } from './util';
+import { PDFDocument } from 'pdf-lib';
+
+async function mergePDFDocuments(arg: any) {
+  const mergedPdf = await PDFDocument.create();
+
+  for (let document of arg.files) {
+    const asas = fs.readFileSync(document);
+    const filedoc = await PDFDocument.load(asas);
+
+    const copiedPages = await mergedPdf.copyPages(
+      filedoc,
+      filedoc.getPageIndices()
+    );
+    copiedPages.forEach((page) => mergedPdf.addPage(page));
+  }
+  const mergedPdfFile = await mergedPdf.save();
+
+  return fs.writeFileSync(arg.saveAt, mergedPdfFile);
+}
 
 const dirTree = require('directory-tree');
 const Store = require('electron-store');
@@ -149,27 +168,57 @@ ipcMain.handle('get-root-path', async (event) => {
 });
 
 ipcMain.handle('merge-file', async (event, arg) => {
+  mergePDFDocuments(arg).then(() => {
+    shell.showItemInFolder(path.normalize(arg.saveAt));
+  });
+
   // do stuff
   // awaitableProcess
-  const merger = new PDFMerger();
+  // const merger = new PDFMerger();
+  // try {
+  //   PDFMerge(arg.files, arg.saveAt, function (err) {
+  //     if (err) {
+  //       console.log(err);
+  //       return err;
+  //     }
+  //     shell.showItemInFolder(path.normalize(arg.saveAt));
+  //   });
+  // } catch (error) {
+  //   return { error };
+  // }
 
-  try {
-    arg.files.forEach((file) => {
-      merger.add(file);
-    });
+  // try {
+  //   arg.files.forEach(async (file) => {
+  //     merger.add(fs.readFileSync(file));
+  //   });
+  // } catch (error) {
+  //   return {
+  //     error,
+  //     msg:'unable to add files'
+  //   };
+  // }
 
-    const name = path.resolve(arg.saveAt);
-    console.log({ name });
+  // const name = path.resolve(arg.saveAt);
 
-    merger.save(name).then(() => {
-      shell.showItemInFolder(fs.readFileSync(name));
-      // shell.openExternal(`file://${name}`);
-    });
-    return { name };
-  } catch (error) {
-    console.log(error);
-    return error;
-  }
+  // try {
+
+  //   merger.saveAsBuffer().then(buf=>{
+  //     fs.writeFileSync(name,buf)
+  //     shell.showItemInFolder(path.normalize(name));
+
+  //   })
+  //   // merger.save(path.normalize(name)).then(() => {
+  //   //   shell.showItemInFolder(path.normalize(name));
+  //   //   // shell.openExternal(`file://${name}`);
+  //   //   });
+  //   //   return { name };
+  //   } catch (error) {
+  //     return {
+  //       error,
+  //       msg:'unable to save files'
+  //     };
+
+  //   }
 });
 
 if (process.env.NODE_ENV === 'production') {

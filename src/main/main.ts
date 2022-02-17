@@ -23,32 +23,15 @@ import { autoUpdater } from 'electron-updater';
 import log from 'electron-log';
 import fs from 'fs';
 
+import { PDFDocument } from 'pdf-lib';
 import MenuBuilder from './menu';
 import { resolveHtmlPath } from './util';
-import { PDFDocument } from 'pdf-lib';
-
-async function mergePDFDocuments(arg: any) {
-  const mergedPdf = await PDFDocument.create();
-
-  for (let document of arg.files) {
-    const asas = fs.readFileSync(document);
-    const filedoc = await PDFDocument.load(asas);
-
-    const copiedPages = await mergedPdf.copyPages(
-      filedoc,
-      filedoc.getPageIndices()
-    );
-    copiedPages.forEach((page) => mergedPdf.addPage(page));
-  }
-  const mergedPdfFile = await mergedPdf.save();
-
-  return fs.writeFileSync(arg.saveAt, mergedPdfFile);
-}
 
 const dirTree = require('directory-tree');
 const Store = require('electron-store');
 
 const store = new Store();
+
 export default class AppUpdater {
   constructor() {
     log.transports.file.level = 'info';
@@ -58,6 +41,31 @@ export default class AppUpdater {
 }
 
 let mainWindow: BrowserWindow | null = null;
+
+async function mergePDFDocuments(arg: {
+  files: any;
+  saveAt: fs.PathOrFileDescriptor;
+}) {
+  const mergedPdf = await PDFDocument.create();
+
+  for (let i = 0; i < arg.files.length; i++) {
+    const document = arg.files[i];
+    const asas = fs.readFileSync(document);
+    const filedoc = await PDFDocument.load(asas);
+
+    const copiedPages = await mergedPdf.copyPages(
+      filedoc,
+      filedoc.getPageIndices()
+    );
+
+    copiedPages.forEach((page) => mergedPdf.addPage(page));
+    // emit event to renderer
+    mainWindow?.webContents.send('mergeProgress', i, arg.files.length);
+  }
+  const mergedPdfFile = await mergedPdf.save();
+
+  fs.writeFileSync(arg.saveAt, mergedPdfFile);
+}
 
 ipcMain.on('ipc-example', async (event, arg) => {
   const msgTemplate = (pingPong: string) => `IPC test: ${pingPong}`;
@@ -168,57 +176,10 @@ ipcMain.handle('get-root-path', async (event) => {
 });
 
 ipcMain.handle('merge-file', async (event, arg) => {
-  mergePDFDocuments(arg).then(() => {
+  return mergePDFDocuments(arg).then(() => {
     shell.showItemInFolder(path.normalize(arg.saveAt));
+    shell.beep();
   });
-
-  // do stuff
-  // awaitableProcess
-  // const merger = new PDFMerger();
-  // try {
-  //   PDFMerge(arg.files, arg.saveAt, function (err) {
-  //     if (err) {
-  //       console.log(err);
-  //       return err;
-  //     }
-  //     shell.showItemInFolder(path.normalize(arg.saveAt));
-  //   });
-  // } catch (error) {
-  //   return { error };
-  // }
-
-  // try {
-  //   arg.files.forEach(async (file) => {
-  //     merger.add(fs.readFileSync(file));
-  //   });
-  // } catch (error) {
-  //   return {
-  //     error,
-  //     msg:'unable to add files'
-  //   };
-  // }
-
-  // const name = path.resolve(arg.saveAt);
-
-  // try {
-
-  //   merger.saveAsBuffer().then(buf=>{
-  //     fs.writeFileSync(name,buf)
-  //     shell.showItemInFolder(path.normalize(name));
-
-  //   })
-  //   // merger.save(path.normalize(name)).then(() => {
-  //   //   shell.showItemInFolder(path.normalize(name));
-  //   //   // shell.openExternal(`file://${name}`);
-  //   //   });
-  //   //   return { name };
-  //   } catch (error) {
-  //     return {
-  //       error,
-  //       msg:'unable to save files'
-  //     };
-
-  //   }
 });
 
 if (process.env.NODE_ENV === 'production') {

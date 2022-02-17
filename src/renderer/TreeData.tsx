@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from 'react';
-import { Table, Button } from 'antd';
+import { Table, Button, Progress } from 'antd';
 // handleSave promise
 
 const getDirectoryStructure = () => {
@@ -15,39 +15,49 @@ function TreeData() {
   const [checkStrictly, setCheckStrictly] = React.useState(false);
   const [treeData, setTreeData] = React.useState([]);
   const [selectedRows, setSelectedRows] = React.useState([]);
+  const [loaded, setLoaded] = useState(0);
+  const [totalFiles, setTotalFiles] = useState(0);
   const rowSelection = {
     onChange: (selectedRowKeys, selectedRows) => {
-      console.log({ selectedRows });
-
       setSelectedRows(selectedRows);
     },
   };
-  const [merging, setMerging] = useState(false)
+
+  useEffect(() => {
+    window?.electron?.ipcRenderer.on('mergeProgress', (arg, arg2) => {
+      setLoaded(arg);
+      setTotalFiles(arg2);
+    });
+
+    return () => {};
+  }, []);
+
+  const [merging, setMerging] = useState(false);
   const onMerge = () => {
+    window.electron
+      .selectDirectory()
+      .then((path) => {
+        const payload = {
+          saveAt: path,
+          files: selectedRows
+            .filter((item) => !item.children)
+            .map((item) => item.path),
+        };
 
-    setMerging(true)
-    window.electron.selectDirectory().then((path) => {
-      setMerging(false)
-      const payload = {
-        saveAt: path,
-        files: selectedRows
-          .filter((item) => !item.children)
-          .map((item) => item.path),
-      };
-      console.log(payload);
-
-      window.electron
-        .mergeFiles(payload)
-        .then((res) => {
-          console.log(res);
-        })
-        .catch((err) => {
-          console.log(err);
-        });
-    }).catch(()=>{
-      setMerging(false)
-
-    })
+        setMerging(true);
+        window.electron
+          .mergeFiles(payload)
+          .then((res) => {
+            setMerging(false);
+          })
+          .catch((err) => {
+            setMerging(false);
+            console.log(err);
+          });
+      })
+      .catch(() => {
+        setMerging(false);
+      });
   };
   const getRootPath = () => {
     return window.electron.getRootPath();
@@ -79,7 +89,6 @@ function TreeData() {
   const setupRootPath = () => {
     window.electron.setupRootPath().then((path) => {
       if (!path) return;
-      console.log({ path });
 
       setRoot(path);
       getDirectoryStructure().then((res) => {
@@ -146,10 +155,18 @@ function TreeData() {
           )}
         </div>
       </div>
-
+      {merging && (
+        <Progress
+          strokeColor={{
+            '0%': '#108ee9',
+            '100%': '#87d068',
+          }}
+          percent={(loaded / totalFiles) * 100}
+        />
+      )}
       {!!root && (
         <Table
-        loading={merging}
+          loading={merging}
           sticky
           className="table-hidescroll"
           columns={columns}
